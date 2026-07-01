@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx"],"version":"5.8.3"}
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/footer.tsx","./src/components/membercard.tsx","./src/components/navbar.tsx","./src/features/stats/ctftimedashboard.tsx","./src/features/stats/types.ts","./src/features/writeups/markdownengine.ts","./src/pages/about.tsx","./src/pages/home.tsx","./src/pages/resources.tsx","./src/pages/writeupviewer.tsx","./src/pages/writeups.tsx"],"version":"5.8.3"}
