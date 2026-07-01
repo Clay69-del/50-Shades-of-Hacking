@@ -5,7 +5,8 @@ import './index.css'
 import App from './App.tsx'
 
 // Polyfill Buffer for gray-matter
-window.Buffer = Buffer
+// @ts-expect-error - polyfilling Buffer globally for the browser
+globalThis.Buffer = Buffer
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
