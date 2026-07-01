@@ -3,8 +3,8 @@ import { CtfTimeTeamData } from './types';
 import { HiTrendingUp, HiGlobeAlt } from 'react-icons/hi';
 import { FaTrophy } from 'react-icons/fa';
 
-// Please update this with your actual proxy URL
-const PROXY_URL = 'https://5manmanman.translatoryogendra.workers.dev';
+// TODO: UPDATE WITH YOUR ACTUAL PROXY WORKER URL AFTER DEPLOYING IT!
+const PROXY_URL = 'https://5manmanman-proxy.translatoryogendra.workers.dev';
 
 export const CtfTimeDashboard: React.FC = () => {
   const [stats, setStats] = useState<CtfTimeTeamData | null>(null);
