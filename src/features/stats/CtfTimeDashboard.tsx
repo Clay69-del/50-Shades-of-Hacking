@@ -3,7 +3,7 @@ import { CtfTimeTeamData, YearRating } from './types';
 import { HiTrendingUp, HiGlobeAlt } from 'react-icons/hi';
 import { FaTrophy } from 'react-icons/fa';
 
-// Use the Cloudflare Functions proxy path on our own domain!
+// Use the deployment-local proxy path so production can add CTFtime-safe headers.
 const PROXY_URL = '/api/ctftime/teams/389645/';
 
 // Mock data for local development
