@@ -4,7 +4,7 @@ import { HiTrendingUp, HiGlobeAlt } from 'react-icons/hi';
 import { FaTrophy } from 'react-icons/fa';
 
 // Use the Cloudflare Functions proxy path on our own domain!
-const PROXY_URL = 'https://ctftime.org/api/v1/teams/389645/';
+const PROXY_URL = '/api/ctftime/teams/389645/';
 
 // Mock data for local development
 const mockData: CtfTimeTeamData = {
