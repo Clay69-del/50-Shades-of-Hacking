@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CtfTimeTeamData, YearRating } from './types';
-import { HiTrendingUp, HiGlobeAlt } from 'react-icons/hi';
+import { HiTrendingUp, HiGlobeAlt, HiFlag, HiLightningBolt } from 'react-icons/hi';
 import { FaTrophy } from 'react-icons/fa';
 
 // Use the deployment-local proxy path so production can add CTFtime-safe headers.
@@ -17,8 +17,34 @@ const mockData: CtfTimeTeamData = {
   academic: false,
   rating: {
     '2026': { rating_points: 61.86, rating_place: 798, organizer_points: 0, country_place: 7 }
-  }
+  },
+  country_standing: {
+    country: 'NP',
+    teams_listed: 8,
+    country_place: 7,
+    global_place: 798,
+    points: 61.86,
+    events: 17,
+    next_target: {
+      team_name: 'silent signal',
+      country_place: 6,
+      points_delta: 11.23,
+    },
+  },
 };
+
+const formatPoints = (value: number | undefined) => (value ?? 0).toFixed(2);
+
+const bestCountryPlace = (stats: CtfTimeTeamData) => {
+  const places = Object.values(stats.rating)
+    .map((year) => year.country_place)
+    .filter((place): place is number => typeof place === 'number');
+
+  return places.length ? Math.min(...places) : null;
+};
+
+const ratedSeasonCount = (stats: CtfTimeTeamData) =>
+  Object.values(stats.rating).filter((year) => 'rating_points' in year).length;
 
 export const CtfTimeDashboard: React.FC = () => {
   const [stats, setStats] = useState<CtfTimeTeamData | null>(null);
@@ -79,61 +105,120 @@ export const CtfTimeDashboard: React.FC = () => {
   
   // Check if current year has full rating data or just country_place
   const hasFullRating = currentYearStats && 'rating_points' in currentYearStats;
+  const displayName = stats.primary_alias || stats.name;
+  const legalName = stats.name && stats.name !== displayName ? stats.name : null;
+  const countryStanding = stats.country_standing;
+  const countryPlace = countryStanding?.country_place ?? currentYearStats?.country_place;
+  const globalPlace = countryStanding?.global_place ?? (hasFullRating ? (currentYearStats as YearRating).rating_place : undefined);
+  const ratingPoints = countryStanding?.points ?? (hasFullRating ? (currentYearStats as YearRating).rating_points : undefined);
+  const bestCountry = bestCountryPlace(stats);
+  const seasonsRated = ratedSeasonCount(stats);
 
   return (
-    <div className="w-full max-w-md mx-auto bg-slate-900/40 border border-slate-900 rounded-lg p-6 font-mono-tactical shadow-2xl relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-300">
-      <div className="absolute top-0 right-0 p-3 opacity-10 text-slate-400 pointer-events-none">
-        <FaTrophy className="w-20 h-20" />
+    <div className="w-full max-w-2xl mx-auto bg-slate-950/80 border border-slate-800 rounded-lg font-mono-tactical shadow-2xl relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
+      <div className="absolute top-0 right-0 p-4 opacity-10 text-slate-300 pointer-events-none">
+        <FaTrophy className="w-24 h-24" />
       </div>
 
-      <div className="flex items-center space-x-4">
-        {stats.logo ? (
-          <img src={stats.logo} alt="Team Avatar" className="w-12 h-12 rounded border border-slate-800" />
-        ) : (
-          <div className="w-12 h-12 rounded bg-slate-950 border border-slate-800 flex items-center justify-center text-emerald-400 font-bold">
-            P5
+      <div className="p-5 sm:p-6">
+        <div className="flex items-start gap-4">
+          {stats.logo ? (
+            <img src={stats.logo} alt="" className="w-14 h-14 rounded border border-slate-800 object-cover" />
+          ) : (
+            <div className="w-14 h-14 shrink-0 rounded bg-slate-900 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold shadow-[0_0_24px_rgba(52,211,153,0.12)]">
+              P5
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
+              <span className="uppercase tracking-wider">CTFtime Team #{stats.id}</span>
+              <span className="h-1 w-1 rounded-full bg-slate-700" />
+              <span>{currentYear} live rating</span>
+            </div>
+            <h3 className="mt-1 text-xl sm:text-2xl font-bold text-white tracking-wide break-words">{displayName}</h3>
+            {legalName && (
+              <p className="mt-1 text-[11px] text-slate-500">
+                Listed as <span className="text-slate-300">{legalName}</span>
+              </p>
+            )}
           </div>
-        )}
-        <div>
-          <h3 className="text-base font-bold text-white tracking-wide">{stats.name}</h3>
-          <p className="text-[11px] text-slate-500 uppercase tracking-wider">
-            CTFtime Team ID: #{stats.id}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mt-6">
-        <div className="p-3 bg-slate-950/60 border border-slate-900 rounded">
-          <div className="flex items-center space-x-1.5 text-slate-500 text-[10px] uppercase tracking-wider mb-1">
-            <HiGlobeAlt className="w-3.5 h-3.5 text-slate-400" />
-            <span>{currentYear} Rank</span>
-          </div>
-          <p className="text-xl font-bold text-emerald-400">
-            {hasFullRating ? `#${(currentYearStats as YearRating).rating_place}` : 'N/A'}
-          </p>
         </div>
 
-        <div className="p-3 bg-slate-950/60 border border-slate-900 rounded">
-          <div className="flex items-center space-x-1.5 text-slate-500 text-[10px] uppercase tracking-wider mb-1">
-            <HiTrendingUp className="w-3.5 h-3.5 text-slate-400" />
-            <span>Total Points</span>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
+          <div className="p-3 bg-slate-900/70 border border-slate-800 rounded">
+            <div className="flex items-center space-x-1.5 text-slate-500 text-[10px] uppercase tracking-wider mb-1.5">
+              <HiGlobeAlt className="w-3.5 h-3.5 text-slate-400" />
+              <span>Global rank</span>
+            </div>
+            <p className="text-xl font-bold text-emerald-400">
+              {globalPlace ? `#${globalPlace}` : 'N/A'}
+            </p>
           </div>
-          <p className="text-xl font-bold text-emerald-400">
-            {hasFullRating ? (currentYearStats as YearRating).rating_points.toFixed(2) : '0.00'}
-          </p>
+
+          <div className="p-3 bg-slate-900/70 border border-slate-800 rounded">
+            <div className="flex items-center space-x-1.5 text-slate-500 text-[10px] uppercase tracking-wider mb-1.5">
+              <HiFlag className="w-3.5 h-3.5 text-slate-400" />
+              <span>{stats.country || 'Country'}</span>
+            </div>
+            <p className="text-xl font-bold text-emerald-400">
+              {countryPlace ? `#${countryPlace}` : 'N/A'}
+            </p>
+          </div>
+
+          <div className="p-3 bg-slate-900/70 border border-slate-800 rounded">
+            <div className="flex items-center space-x-1.5 text-slate-500 text-[10px] uppercase tracking-wider mb-1.5">
+              <HiTrendingUp className="w-3.5 h-3.5 text-slate-400" />
+              <span>Points</span>
+            </div>
+            <p className="text-xl font-bold text-emerald-400">
+              {formatPoints(ratingPoints)}
+            </p>
+          </div>
+
+          <div className="p-3 bg-slate-900/70 border border-slate-800 rounded">
+            <div className="flex items-center space-x-1.5 text-slate-500 text-[10px] uppercase tracking-wider mb-1.5">
+              <HiLightningBolt className="w-3.5 h-3.5 text-slate-400" />
+              <span>Events</span>
+            </div>
+            <p className="text-xl font-bold text-emerald-400">
+              {countryStanding?.events ?? 'N/A'}
+            </p>
+          </div>
         </div>
-      </div>
-      
-      <div className="mt-4 pt-3 border-t border-slate-950/60 flex justify-between items-center text-[10px] text-slate-500">
-        <span>Country Scope: {stats.country || 'Global'}</span>
-        <a 
-          href={`https://ctftime.org/team/${stats.id}`}
-          target="_blank"
-          rel="noreferrer"
-          className="text-emerald-500 hover:underline flex items-center space-x-1"
-        >
-          <span>View Profile Logs</span>
-        </a>
+
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
+          <div className="border border-slate-800 bg-slate-900/40 rounded p-3">
+            <p className="text-slate-500 uppercase tracking-wider">Country field</p>
+            <p className="mt-1 text-slate-200">
+              {countryStanding ? `${countryStanding.teams_listed} ranked ${countryStanding.country} teams` : 'Unavailable'}
+            </p>
+          </div>
+          <div className="border border-slate-800 bg-slate-900/40 rounded p-3">
+            <p className="text-slate-500 uppercase tracking-wider">Best country finish</p>
+            <p className="mt-1 text-slate-200">{bestCountry ? `#${bestCountry}` : 'N/A'}</p>
+          </div>
+          <div className="border border-slate-800 bg-slate-900/40 rounded p-3">
+            <p className="text-slate-500 uppercase tracking-wider">Rated seasons</p>
+            <p className="mt-1 text-slate-200">{seasonsRated}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center text-[10px] text-slate-500">
+          <span>
+            {countryStanding?.next_target
+              ? `Next ${countryStanding.country} target: ${countryStanding.next_target.team_name} (+${formatPoints(countryStanding.next_target.points_delta)} pts)`
+              : `Country scope: ${stats.country || 'Global'}`}
+          </span>
+          <a
+            href={`https://ctftime.org/team/${stats.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-emerald-500 hover:underline flex items-center space-x-1"
+          >
+            <span>View Profile Logs</span>
+          </a>
+        </div>
       </div>
     </div>
   );

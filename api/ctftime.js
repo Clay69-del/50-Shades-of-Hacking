@@ -7,6 +7,11 @@ const corsHeaders = {
 
 const TEAM_ID = '389645';
 const TEAM_PATH = `teams/${TEAM_ID}`;
+const TEAM_COUNTRY = 'NP';
+const API_HEADERS = {
+  'User-Agent': 'Team Pri5m Dashboard/1.0 (+https://teampri5m.vercel.app)',
+  Accept: 'application/json',
+};
 
 function requestedPath(pathParam) {
   if (Array.isArray(pathParam)) {
@@ -40,21 +45,45 @@ export default async function handler(req, res) {
       return;
     }
 
-    const ctftimeUrl = new URL(`https://ctftime.org/api/v1/${TEAM_PATH}/`);
+    const teamUrl = new URL(`https://ctftime.org/api/v1/${TEAM_PATH}/`);
+    const countryUrl = new URL(`https://ctftime.org/api/v1/top-by-country/${TEAM_COUNTRY.toLowerCase()}/`);
 
-    const response = await fetch(ctftimeUrl.toString(), {
-      headers: {
-        'User-Agent': 'Team Pri5m Dashboard/1.0 (+https://teampri5m.vercel.app)',
-        Accept: 'application/json',
-      },
-    });
+    const [teamResponse, countryResponse] = await Promise.all([
+      fetch(teamUrl.toString(), { headers: API_HEADERS }),
+      fetch(countryUrl.toString(), { headers: API_HEADERS }).catch(() => null),
+    ]);
 
-    const body = await response.text();
-    const contentType = response.headers.get('content-type') || 'application/json';
+    const body = await teamResponse.text();
+    const contentType = teamResponse.headers.get('content-type') || 'application/json';
 
-    if (response.ok && contentType.includes('application/json')) {
+    if (teamResponse.ok && contentType.includes('application/json')) {
       const data = JSON.parse(body);
       data.logo = '';
+
+      if (countryResponse?.ok) {
+        const countryTeams = await countryResponse.json().catch(() => []);
+        const teamIndex = countryTeams.findIndex((team) => String(team.team_id) === TEAM_ID);
+        const countryStanding = teamIndex >= 0 ? countryTeams[teamIndex] : null;
+        const nextTarget = teamIndex > 0 ? countryTeams[teamIndex - 1] : null;
+
+        data.country_standing = countryStanding
+          ? {
+              country: TEAM_COUNTRY,
+              teams_listed: countryTeams.length,
+              country_place: countryStanding.country_place,
+              global_place: countryStanding.place,
+              points: countryStanding.points,
+              events: countryStanding.events,
+              next_target: nextTarget
+                ? {
+                    team_name: nextTarget.team_name,
+                    country_place: nextTarget.country_place,
+                    points_delta: Math.max(0, nextTarget.points - countryStanding.points),
+                  }
+                : null,
+            }
+          : null;
+      }
 
       res.setHeader('Content-Type', 'application/json');
       res.status(200).json(data);
@@ -62,7 +91,7 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Content-Type', contentType);
-    res.status(response.status).send(body);
+    res.status(teamResponse.status).send(body);
   } catch (error) {
     console.error('CTFtime proxy error:', error);
     res.status(500).json({

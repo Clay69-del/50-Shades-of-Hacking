@@ -18,4 +18,17 @@ export interface CtfTimeTeamData {
   rating: {
     [year: string]: YearRating | { country_place: number };
   };
+  country_standing?: {
+    country: string;
+    teams_listed: number;
+    country_place: number;
+    global_place: number;
+    points: number;
+    events: number;
+    next_target: {
+      team_name: string;
+      country_place: number;
+      points_delta: number;
+    } | null;
+  } | null;
 }
