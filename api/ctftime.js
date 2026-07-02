@@ -6,15 +6,9 @@ const corsHeaders = {
 };
 
 function resolvePath(pathParam) {
-  let path;
-
-  if (Array.isArray(pathParam) && pathParam.length > 0) {
-    path = pathParam.join('/');
-  } else if (typeof pathParam === 'string' && pathParam.length > 0) {
-    path = pathParam;
-  } else {
-    path = 'teams/389645';
-  }
+  const path = Array.isArray(pathParam)
+    ? pathParam.find(Boolean)
+    : pathParam || 'teams/389645';
 
   return path.endsWith('/') ? path : `${path}/`;
 }
@@ -54,7 +48,7 @@ export default async function handler(req, res) {
 
     const response = await fetch(ctftimeUrl.toString(), {
       headers: {
-        'User-Agent': 'Team Pri5m Dashboard/1.0 (+https://50-shades-of-hacking.vercel.app)',
+        'User-Agent': 'Team Pri5m Dashboard/1.0 (+https://teampri5m.vercel.app)',
         Accept: 'application/json',
       },
     });
@@ -63,13 +57,7 @@ export default async function handler(req, res) {
     const contentType = response.headers.get('content-type') || 'application/json';
 
     res.setHeader('Content-Type', contentType);
-
-    if (!response.ok) {
-      res.status(response.status).send(body);
-      return;
-    }
-
-    res.status(200).send(body);
+    res.status(response.status).send(body);
   } catch (error) {
     console.error('CTFtime proxy error:', error);
     res.status(500).json({
