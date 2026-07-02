@@ -5,12 +5,15 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400',
 };
 
-function resolvePath(pathParam) {
-  const path = Array.isArray(pathParam)
-    ? pathParam.find(Boolean)
-    : pathParam || 'teams/389645';
+const TEAM_ID = '389645';
+const TEAM_PATH = `teams/${TEAM_ID}`;
 
-  return path.endsWith('/') ? path : `${path}/`;
+function requestedPath(pathParam) {
+  if (Array.isArray(pathParam)) {
+    return pathParam.find(Boolean);
+  }
+
+  return pathParam;
 }
 
 export default async function handler(req, res) {
@@ -30,21 +33,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const ctftimePath = resolvePath(req.query.path);
-    const ctftimeUrl = new URL(`https://ctftime.org/api/v1/${ctftimePath}`);
+    const path = requestedPath(req.query.path);
 
-    Object.entries(req.query).forEach(([key, value]) => {
-      if (key === 'path') return;
+    if (path && path.replace(/\/+$/, '') !== TEAM_PATH) {
+      res.status(403).json({ error: 'Only Team Pri5m CTFtime stats are available' });
+      return;
+    }
 
-      if (Array.isArray(value)) {
-        value.forEach((item) => ctftimeUrl.searchParams.append(key, item));
-        return;
-      }
-
-      if (value !== undefined) {
-        ctftimeUrl.searchParams.set(key, value);
-      }
-    });
+    const ctftimeUrl = new URL(`https://ctftime.org/api/v1/${TEAM_PATH}/`);
 
     const response = await fetch(ctftimeUrl.toString(), {
       headers: {
