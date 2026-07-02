@@ -35,17 +35,6 @@ const mockData: CtfTimeTeamData = {
 
 const formatPoints = (value: number | undefined) => (value ?? 0).toFixed(2);
 
-const bestCountryPlace = (stats: CtfTimeTeamData) => {
-  const places = Object.values(stats.rating)
-    .map((year) => year.country_place)
-    .filter((place): place is number => typeof place === 'number');
-
-  return places.length ? Math.min(...places) : null;
-};
-
-const ratedSeasonCount = (stats: CtfTimeTeamData) =>
-  Object.values(stats.rating).filter((year) => 'rating_points' in year).length;
-
 export const CtfTimeDashboard: React.FC = () => {
   const [stats, setStats] = useState<CtfTimeTeamData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -111,8 +100,7 @@ export const CtfTimeDashboard: React.FC = () => {
   const countryPlace = countryStanding?.country_place ?? currentYearStats?.country_place;
   const globalPlace = countryStanding?.global_place ?? (hasFullRating ? (currentYearStats as YearRating).rating_place : undefined);
   const ratingPoints = countryStanding?.points ?? (hasFullRating ? (currentYearStats as YearRating).rating_points : undefined);
-  const bestCountry = bestCountryPlace(stats);
-  const seasonsRated = ratedSeasonCount(stats);
+  const nextTarget = countryStanding?.next_target;
 
   return (
     <div className="w-full max-w-2xl mx-auto bg-slate-950/80 border border-slate-800 rounded-lg font-mono-tactical shadow-2xl relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
@@ -189,25 +177,29 @@ export const CtfTimeDashboard: React.FC = () => {
 
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
           <div className="border border-slate-800 bg-slate-900/40 rounded p-3">
-            <p className="text-slate-500 uppercase tracking-wider">Country field</p>
+            <p className="text-slate-500 uppercase tracking-wider">Nepal leaderboard</p>
             <p className="mt-1 text-slate-200">
-              {countryStanding ? `${countryStanding.teams_listed} ranked ${countryStanding.country} teams` : 'Unavailable'}
+              {countryStanding ? `#${countryStanding.country_place} of ${countryStanding.teams_listed}` : 'Unavailable'}
             </p>
           </div>
           <div className="border border-slate-800 bg-slate-900/40 rounded p-3">
-            <p className="text-slate-500 uppercase tracking-wider">Best country finish</p>
-            <p className="mt-1 text-slate-200">{bestCountry ? `#${bestCountry}` : 'N/A'}</p>
+            <p className="text-slate-500 uppercase tracking-wider">Next Nepal target</p>
+            <p className="mt-1 text-slate-200">
+              {nextTarget ? `${nextTarget.team_name} (#${nextTarget.country_place})` : 'Top Nepal slot'}
+            </p>
           </div>
           <div className="border border-slate-800 bg-slate-900/40 rounded p-3">
-            <p className="text-slate-500 uppercase tracking-wider">Rated seasons</p>
-            <p className="mt-1 text-slate-200">{seasonsRated}</p>
+            <p className="text-slate-500 uppercase tracking-wider">Gap to next</p>
+            <p className="mt-1 text-slate-200">
+              {nextTarget ? `${formatPoints(nextTarget.points_delta)} pts` : '0.00 pts'}
+            </p>
           </div>
         </div>
 
         <div className="mt-4 pt-3 border-t border-slate-800 flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center text-[10px] text-slate-500">
           <span>
-            {countryStanding?.next_target
-              ? `Next ${countryStanding.country} target: ${countryStanding.next_target.team_name} (+${formatPoints(countryStanding.next_target.points_delta)} pts)`
+            {nextTarget
+              ? `Live ${countryStanding?.country || stats.country} ranking from CTFtime country leaderboard`
               : `Country scope: ${stats.country || 'Global'}`}
           </span>
           <a
