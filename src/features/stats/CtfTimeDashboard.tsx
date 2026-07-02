@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { CtfTimeTeamData } from './types';
+import { CtfTimeTeamData, YearRating } from './types';
 import { HiTrendingUp, HiGlobeAlt } from 'react-icons/hi';
 import { FaTrophy } from 'react-icons/fa';
 
 // Use the Cloudflare Functions proxy path on our own domain!
-const PROXY_URL = '/api/ctftime';
+const PROXY_URL = '/api/ctftime/teams/389645/';
+
+// Mock data for local development
+const mockData: CtfTimeTeamData = {
+  id: 389645,
+  name: 'PEG_D_SEC_C',
+  primary_alias: 'Team Pri5m',
+  country: 'NP',
+  logo: '',
+  aliases: ['50 Shades of Hacking', 'Team Pri5m'],
+  academic: false,
+  rating: {
+    '2026': { rating_points: 61.86, rating_place: 798, organizer_points: 0, country_place: 7 }
+  }
+};
 
 export const CtfTimeDashboard: React.FC = () => {
   const [stats, setStats] = useState<CtfTimeTeamData | null>(null);
@@ -12,6 +26,17 @@ export const CtfTimeDashboard: React.FC = () => {
   const [error, setError] = useState<boolean>(false);
 
   useEffect(() => {
+    // Check if we're running locally (for dev purposes)
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isLocal) {
+      // Use mock data locally
+      setStats(mockData);
+      setLoading(false);
+      return;
+    }
+
+    // Otherwise try the real proxy for production
     fetch(PROXY_URL)
       .then((res) => {
         if (!res.ok) throw new Error('Proxy down');
@@ -51,6 +76,9 @@ export const CtfTimeDashboard: React.FC = () => {
   // Dynamically grab current active calendar metrics
   const currentYear = new Date().getFullYear().toString(); // e.g., "2026"
   const currentYearStats = stats.rating[currentYear];
+  
+  // Check if current year has full rating data or just country_place
+  const hasFullRating = currentYearStats && 'rating_points' in currentYearStats;
 
   return (
     <div className="w-full max-w-md mx-auto bg-slate-900/40 border border-slate-900 rounded-lg p-6 font-mono-tactical shadow-2xl relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-300">
@@ -81,7 +109,7 @@ export const CtfTimeDashboard: React.FC = () => {
             <span>{currentYear} Rank</span>
           </div>
           <p className="text-xl font-bold text-emerald-400">
-            {currentYearStats?.rating_rank ? `#${currentYearStats.rating_rank}` : 'N/A'}
+            {hasFullRating ? `#${(currentYearStats as YearRating).rating_place}` : 'N/A'}
           </p>
         </div>
 
@@ -91,7 +119,7 @@ export const CtfTimeDashboard: React.FC = () => {
             <span>Total Points</span>
           </div>
           <p className="text-xl font-bold text-emerald-400">
-            {currentYearStats?.rating_points ? currentYearStats.rating_points.toFixed(2) : '0.00'}
+            {hasFullRating ? (currentYearStats as YearRating).rating_points.toFixed(2) : '0.00'}
           </p>
         </div>
       </div>
