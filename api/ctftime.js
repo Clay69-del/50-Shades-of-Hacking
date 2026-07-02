@@ -52,6 +52,15 @@ export default async function handler(req, res) {
     const body = await response.text();
     const contentType = response.headers.get('content-type') || 'application/json';
 
+    if (response.ok && contentType.includes('application/json')) {
+      const data = JSON.parse(body);
+      data.logo = '';
+
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).json(data);
+      return;
+    }
+
     res.setHeader('Content-Type', contentType);
     res.status(response.status).send(body);
   } catch (error) {
